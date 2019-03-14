@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+    <head>
+        <title>canvasExample</title>
+        <meta charset='utf-8' />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <canvas height='420' width='750' id='canvas' class="center">Обновите браузер</canvas>
+
+
+        <script type="module">
+
+        	import drawMap from './js/functions/drawMap.js';
+        	import drawRoad from './js/functions/drawRoad.js';
+        	import checkClickCross from './js/functions/checkClickCross.js';
+        	import checkClickIland from './js/functions/checkClickIland.js';
+        	import checkClickIlandAccept from './js/functions/checkClickIlandAccept.js';
+        	import drawChangedIland from './js/functions/drawChangedIland.js';
+        	import drawBorder from './js/functions/drawBorder.js';
+
+        	import {canvas, ctx, cross, select, cross_active, select_active, map_element} from './js/canvas.js';
+        	import {back} from './js/temp.js'; //Временно
+
+
+            var main_url = "https://api-mirkrestikom.herokuapp.com"
+        	var total_score = 0;  // Общее кол-во крестиков
+        	var score = 0; // Кол-во свободных крестиков пользователя
+
+            // Получение данных от api и отрисовка
+            getData(main_url + "/map/", "background");
+
+
+            // Инициализация отрисовки
+            function Draw(background, ways, selected_iland, selected_way) {
+                
+
+	            drawMap(background); // Отрисовка карты 
+
+                if (selected_iland.status >= 1) { //Отрисовать прогресс дорожек выбранного острова
+
+                	drawChangedIland(selected_iland, selected_iland.status);
+                	drawRoad(ways[0]);
+                }
+
+				canvas.addEventListener("click", handler); // Добавляем обработчик кликов
+
+				function handler(e){ // Обработчик
+                  
+				  output.innerText = `Координаты клика: ${e.offsetX}, ${e.offsetY}. `;
+
+				    if (selected_iland.status <= 1) { // Если остров не утвержден, но выбран
+
+	                    selected_iland.status = 0;
+
+					    checkClickIlandAccept(selected_iland, e); // Проверяем клик по выбранному острову
+
+					        background.forEach(function(line) {
+ 
+						    selected_iland = checkClickIland(line, e, selected_iland, ways, background);
+
+						}); 
+
+
+					} else if (selected_iland.status === 2) { // Если остров утвержден
+
+	                        
+						var check_output = checkClickCross(ways[selected_iland.way], e, user, score, output);
+						score = check_output[0];
+						selected_way = check_output[1];
+	                        
+	                    if(selected_way[selected_way.length-1][2] ==1 ){ // Заполнена ли дорожка
+
+	                        $('#myModal').modal('show');
+
+	                        iland_modal.innerText = "Дорожка заполнена"
+	                        selected_iland.status = 3
+
+	                    }
+						background.forEach(function(line) {
+
+							checkClickIlandAccept(line, e);
+
+						});
+
+					} 
+
+					// Подтверждение выбора острова
+			        accept_iland.onclick = function() {
+                        
+				        selected_iland.status = 2;
+				        accept_iland.style.display = 'none';
+						drawChangedIland(selected_iland, selected_iland.status);
+
+			        }
+
+			    };
+
+		        // Сброс прогресса
+		        reset_state.onclick = function() {
+
+	                canvas.removeEventListener("click", handler); // Удаляем обработчик перед перерисовкой (убрать n+1 срабатывания)
+		        	getData(main_url + "/user/reset/", "background_reset");
+		        	accept_iland.style.display = 'block';
+
+		        }
+
+            }
+
+
+		    // Выводим текущие клики
+	        canvas.onmousemove = function(e) { 
+			    position.innerText = `Текущие координаты: ${e.offsetX}, ${e.offsetY}. `;
+		    };
+
+
+	        // Получение данных от api
+		    function getData(url, element) {
+
+                  fetch(url)
+		          .then((response) => {
+		              if(response.ok) {
+		                  return response.json();
+		              }
+		              alert("Ошибка соеинения с сервером");
+		          })
+		          .then((json) => {
+		          	if (element === "background") {
+
+                        Draw(json.map, json.ways, json.selected_iland, json.selected_way);
+                        getUserData({"total_score": json.total_score, "score": json.score});
+
+		          	} else if (element === "background_reset"){
+
+                        Draw(json.map, json.ways, json.selected_iland, json.selected_way);
+                        getUserData({"total_score": json.total_score, "score": json.score});
+		          	}
+		          })
+		          .catch((error) => {
+		              console.log(error);
+		          });
+
+		    }
+
+
+            // Вывод данных пользователя
+            function getUserData(user_data) {
+
+                total_score = user_data.total_score;
+                score = user_data.score;
+
+                user.innerText = `Остаток крестиков: ${score}.`;
+                user_total.innerText = `Всего крестиков: ${total_score}.`;
+
+            }
+
+
+        </script>
+        <div id="user" class="center"></div>
+        <div id="user_total" class="center"></div>
+        <div id="position" class="center"></div>
+        <div id="output" class="center"></div>
+        <button type="button" id="reset_state" class="btn btn-danger center">Сбросить</button>
+		<!-- Modal -->
+		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+		  <div class="modal-dialog modal-dialog-centered" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <h5 class="modal-title" id="exampleModalCenterTitle">Информация по острову</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+		          <span aria-hidden="true">&times;</span>
+		        </button>
+		      </div>
+		      <div class="modal-body" id="iland_modal">
+		        "Тест"
+		      </div>
+		      <div class="modal-footer">
+		        <button id="accept_iland" type="button" class="btn btn-primary">Выбрать остров</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+        <style>
+         .center {
+         	display:block;
+         	margin: 0 auto;
+         	text-align: center;
+         }
+        </style>
+    </body>
+</html>
