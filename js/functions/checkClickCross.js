@@ -11,7 +11,7 @@ export default function checkClickCross(map, e, user, score, output) {
           map[index][2] = 1;
           ctx.drawImage(cross_active, map[index][0], map[index][1], 20, 20); // Заменяем крестик
           score --; // Вычетаем очки
-          user.innerText = `Остаток крестиков: ${score}. `;
+          user.innerText = `${score}`;
           output.innerText += ` Клик по крестику ${map[index][0]}. `;
 
       } else {

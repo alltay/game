@@ -9,7 +9,9 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     </head>
     <body>
-        <canvas height='420' width='750' id='canvas' class="center">Обновите браузер</canvas>
+    	<div id="user" class="center"></div>
+    	<button type="button" id="reset_state" class="btn"></button>
+        <canvas height='630' width='1120' id='canvas' class="center">Обновите браузер</canvas>
 
 
         <script type="module">
@@ -30,8 +32,58 @@
         	var total_score = 0;  // Общее кол-во крестиков
         	var score = 0; // Кол-во свободных крестиков пользователя
 
+
+
+		    // put the paths to your images in imageURLs[]
+		    var imageURLs=[];  
+		    imageURLs.push("./images/back.png");
+		    imageURLs.push("./images/cross.png");
+		    imageURLs.push("./images/select.png");
+            imageURLs.push("./images/select_active.png");
+            imageURLs.push("./images/counter.png");
+		    // the loaded images will be placed in imgs[]
+		    var imgs=[];
+		    var imagesOK=0;
+		    startLoadingAllImages(imagesAreNowLoaded);
+
+		    // Create a new Image() for each item in imageURLs[]
+		    // When all images are loaded, run the callback (==imagesAreNowLoaded)
+		    function startLoadingAllImages(callback){
+
+		      // iterate through the imageURLs array and create new images for each
+		      for (var i=0; i<imageURLs.length; i++) {
+		        // create a new image an push it into the imgs[] array
+		        var img = new Image();
+		        // Important! By pushing (saving) this img into imgs[],
+		        //     we make sure the img variable is free to
+		        //     take on the next value in the loop.
+		        imgs.push(img);
+		        // when this image loads, call this img.onload
+		        img.onload = function(){ 
+		          // this img loaded, increment the image counter
+		          imagesOK++; 
+		          // if we've loaded all images, call the callback
+		          if (imagesOK>=imageURLs.length ) {
+		            callback();
+		          }
+		        };
+		        // notify if there's an error
+		        img.onerror=function(){alert("image load failed");} 
+		        // set img properties
+		        img.src = imageURLs[i];
+		        }      
+		    }
+
+
+		    // All the images are now loaded
+		    // Do drawImage & fillText
+		    function imagesAreNowLoaded(){
+		      getData(main_url + "/map/", "background")
+		    }
+
+
             // Получение данных от api и отрисовка
-            getData(main_url + "/map/", "background");
+            // getData(main_url + "/map/", "background");
 
 
             // Инициализация отрисовки
@@ -105,6 +157,7 @@
 	                canvas.removeEventListener("click", handler); // Удаляем обработчик перед перерисовкой (убрать n+1 срабатывания)
 		        	getData(main_url + "/user/reset/", "background_reset");
 		        	accept_iland.style.display = 'block';
+		        	alert('Прогресс сброшен')
 
 		        }
 
@@ -119,29 +172,80 @@
 
 	        // Получение данных от api
 		    function getData(url, element) {
+            // alert(1)
+            let json
+		    json = {"map": 
+		              [
+		              {"h": 630, "w": 1120, "x": 0, "y": 0, "img": "back.png", "type": 0},
+		              {"h": 99, "w": 99, "x": 0, "y": 0, "img": "counter.png", "type": 0},
+		              {"h": 66, "w": 122, "x": 240, "y": 470, "img": "select.png", "way": 0, "type": 1},
+		              {"h": 66, "w": 122, "x": 220, "y": 270, "img": "select.png", "way": 1, "type": 1},
+		              ], 
+		          "ways": 
+		              [
+		               [
+		                [200, 470, 0],
+		                [230, 460, 0],
+		                [260, 445, 0],
+		                [290, 430, 0],
+		                [320, 420, 0],
+		                [355, 410, 0],
+		                [390, 400, 0],
+		                [425, 405, 0],
+		                [460, 420, 0]
+		               ],
+		               [
+		                [200, 470, 0],
+		                [230, 460, 0],
+		                [260, 445, 0],
+		                [290, 430, 0],
+		                [320, 420, 0],
+		                [355, 410, 0],
+		                [390, 400, 0],
+		                [415, 375, 0],
+		                [410, 340, 0]
+		               ]
+		              ],
+		          "score": 5,
+		          "total_score": 5,
+		          "selected_way": 0,
+		          "selected_iland": {"h": 66, "w": 122, "x": 240, "y": 470, "img": "select.png", "way": 0, "type": 1, "status": 1}}  	
 
-                  fetch(url)
-		          .then((response) => {
-		              if(response.ok) {
-		                  return response.json();
-		              }
-		              alert("Ошибка соеинения с сервером");
-		          })
-		          .then((json) => {
-		          	if (element === "background") {
+
+		         if (element === "background") {
 
                         Draw(json.map, json.ways, json.selected_iland, json.selected_way);
                         getUserData({"total_score": json.total_score, "score": json.score});
 
-		          	} else if (element === "background_reset"){
+		        } else if (element === "background_reset"){
 
                         Draw(json.map, json.ways, json.selected_iland, json.selected_way);
                         getUserData({"total_score": json.total_score, "score": json.score});
-		          	}
-		          })
-		          .catch((error) => {
-		              console.log(error);
-		          });
+		        }
+
+
+            //       fetch(url)
+		          // .then((response) => {
+		          //     if(response.ok) {
+		          //         return response.json();
+		          //     }
+		          //     alert("Ошибка соеинения с сервером");
+		          // })
+		          // .then((json) => {
+		          // 	if (element === "background") {
+
+            //             Draw(json.map, json.ways, json.selected_iland, json.selected_way);
+            //             getUserData({"total_score": json.total_score, "score": json.score});
+
+		          // 	} else if (element === "background_reset"){
+
+            //             Draw(json.map, json.ways, json.selected_iland, json.selected_way);
+            //             getUserData({"total_score": json.total_score, "score": json.score});
+		          // 	}
+		          // })
+		          // .catch((error) => {
+		          //     console.log(error);
+		          // });
 
 		    }
 
@@ -152,18 +256,18 @@
                 total_score = user_data.total_score;
                 score = user_data.score;
 
-                user.innerText = `Остаток крестиков: ${score}.`;
+                user.innerText = `${score}`;
                 user_total.innerText = `Всего крестиков: ${total_score}.`;
 
             }
 
 
         </script>
-        <div id="user" class="center"></div>
+        <!-- <div id="user" class="center"></div> -->
         <div id="user_total" class="center"></div>
         <div id="position" class="center"></div>
         <div id="output" class="center"></div>
-        <button type="button" id="reset_state" class="btn btn-danger center">Сбросить</button>
+        <!-- <button type="button" id="reset_state" class="btn btn-danger center">Сбросить</button> -->
 		<!-- Modal -->
 		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
 		  <div class="modal-dialog modal-dialog-centered" role="document">
@@ -184,11 +288,28 @@
 		  </div>
 		</div>
         <style>
-         .center {
+        .center {
          	display:block;
-         	margin: 0 auto;
-         	text-align: center;
          }
+        #reset_state {
+         	position: absolute;
+		    margin-top: 35px;
+		    margin-left: 900px;
+            background-image: url(images/reset.png);
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            height: 32px;
+            width: 163px;
+        }
+        #user {
+           position: absolute;
+           margin-top: 40px;
+           margin-left: 60px;
+           font-size: 12px;
+           color: white;
+           font-weight: bold;
+           letter-spacing: 4px;
+        }
         </style>
     </body>
 </html>
