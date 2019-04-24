@@ -41,6 +41,7 @@
 		    imageURLs.push("./images/select.png");
             imageURLs.push("./images/select_active.png");
             imageURLs.push("./images/counter.png");
+            imageURLs.push("./images/pixel.png");
 		    // the loaded images will be placed in imgs[]
 		    var imgs=[];
 		    var imagesOK=0;
@@ -178,8 +179,8 @@
 		              [
 		              {"h": 630, "w": 1120, "x": 0, "y": 0, "img": "back.png", "type": 0},
 		              {"h": 99, "w": 99, "x": 0, "y": 0, "img": "counter.png", "type": 0},
-		              {"h": 66, "w": 122, "x": 240, "y": 470, "img": "select.png", "way": 0, "type": 1},
-		              {"h": 66, "w": 122, "x": 220, "y": 270, "img": "select.png", "way": 1, "type": 1},
+		              {"h": 100, "w": 100, "x": 290, "y": 480, "img": "pixel.png", "way": 0, "type": 1, "info": "Бухта рукодельных пиратов"},
+		              {"h": 100, "w": 100, "x": 230, "y": 270, "img": "pixel.png", "way": 1, "type": 1, "info": "Побережье романтиков"},
 		              ], 
 		          "ways": 
 		              [
@@ -206,10 +207,10 @@
 		                [410, 340, 0]
 		               ]
 		              ],
-		          "score": 5,
+		          "score": 900,
 		          "total_score": 5,
 		          "selected_way": 0,
-		          "selected_iland": {"h": 66, "w": 122, "x": 240, "y": 470, "img": "select.png", "way": 0, "type": 1, "status": 1}}  	
+		          "selected_iland": {"h": 0, "w": 0, "x": 0, "y": 0, "img": "select.png", "way": 0, "type": 1, "status": 0}}  	
 
 
 		         if (element === "background") {
@@ -255,8 +256,12 @@
 
                 total_score = user_data.total_score;
                 score = user_data.score;
-
-                user.innerText = `${score}`;
+                if (score == 0){
+                	user.innerText = "000";
+                }
+                else {
+                	user.innerText = `${score}`;
+                }
                 user_total.innerText = `Всего крестиков: ${total_score}.`;
 
             }
@@ -304,11 +309,11 @@
         #user {
            position: absolute;
            margin-top: 40px;
-           margin-left: 60px;
+           margin-left: 40px;
            font-size: 12px;
            color: white;
            font-weight: bold;
-           letter-spacing: 4px;
+           letter-spacing: 3px;
         }
         </style>
     </body>
